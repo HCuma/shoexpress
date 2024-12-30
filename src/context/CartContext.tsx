@@ -8,7 +8,7 @@ interface CartItem {
   price: string;
   image: string;
   color: string;
-  size?: number;
+  size: number;
   quantity: number;
 }
 
@@ -46,6 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       return [...prevItems, { ...product, quantity: 1 }];
     });
+    setIsCartOpen(true);
   };
 
   const removeFromCart = (productId: number, size?: number) => {

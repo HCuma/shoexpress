@@ -6,8 +6,8 @@ import { CartProvider } from "@/context/CartContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Next.js Uygulaması",
-  description: "Modern Next.js uygulaması",
+  title: "SHOEXPRESS Store",
+  description: "En yeni ve trend spor ayakkabı modelleri uygun fiyatlarla.",
 };
 
 export default function RootLayout({

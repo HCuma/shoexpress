@@ -15,7 +15,6 @@ export default function Header() {
   const { setIsCartOpen, totalItems } = useCart();
 
   const menuItems = [
-    { name: "Ana Sayfa", href: "/" },
     { name: "Erkek", href: "/erkek" },
     { name: "Kadın", href: "/kadin" },
     { name: "Çocuk", href: "/cocuk" },

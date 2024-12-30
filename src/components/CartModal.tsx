@@ -4,6 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 
 export default function CartModal() {
+  const router = useRouter();
   const {
     items,
     isCartOpen,
@@ -12,7 +13,6 @@ export default function CartModal() {
     updateQuantity,
     totalPrice,
   } = useCart();
-  const router = useRouter();
 
   if (!isCartOpen) return null;
 

@@ -1,19 +1,6 @@
 [build]
-  command = "npm install && npm run build"
+  command = "npm run build"
   publish = ".next"
 
-[build.environment]
-  NEXT_USE_NETLIFY_EDGE = "true"
-  NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
-  NEXT_TELEMETRY_DISABLED = "1"
-  NEXT_SHARP_PATH = "/tmp/node_modules/sharp"
-
 [[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/next_render"
-  status = 200
-  force = true 
+  package = "@netlify/plugin-nextjs" 
