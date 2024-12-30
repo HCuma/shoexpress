@@ -1,75 +1,85 @@
-import Header from "@/components/Header";
+"use client";
+
 import { products } from "@/data/products";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import SizeSelector from "./SizeSelector";
+import { useCart } from "@/context/CartContext";
+import { useState } from "react";
+
+export function generateStaticParams() {
+  return products.map((product) => ({
+    id: product.id.toString(),
+  }));
+}
 
 export default function ProductPage({ params }: { params: { id: string } }) {
-  const product = products.find(
-    (p: (typeof products)[0]) => p.id === parseInt(params.id)
-  );
+  const product = products.find((p) => p.id === parseInt(params.id));
+  const { addToCart } = useCart();
+  const [selectedSize, setSelectedSize] = useState<number | null>(null);
 
   if (!product) {
-    notFound();
+    return <div>Ürün bulunamadı</div>;
   }
 
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      alert("Lütfen bir beden seçin");
+      return;
+    }
+
+    addToCart({
+      ...product,
+      size: selectedSize,
+      quantity: 1,
+    });
+  };
+
   return (
-    <main className="min-h-screen bg-white">
-      <Header />
-      <div className="pt-20">
-        <div className="container mx-auto px-6 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            {/* Ürün Görseli */}
-            <div className="relative h-[500px] rounded-lg overflow-hidden">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
+    <div className="min-h-screen bg-white py-12">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Ürün Görseli */}
+          <div>
+            <img
+              src={product.image}
+              alt={product.name}
+              className="h-full w-full rounded-lg object-cover"
+            />
+          </div>
+
+          {/* Ürün Detayları */}
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-3xl font-bold">{product.name}</h1>
+            <p className="text-lg text-gray-600">{product.color}</p>
+            <p className="text-2xl font-semibold">₺{product.price}</p>
+
+            {/* Beden Seçici */}
+            <div className="space-y-2">
+              <p className="font-medium">Beden</p>
+              <SizeSelector
+                selectedSize={selectedSize}
+                onSelectSize={setSelectedSize}
               />
             </div>
 
-            {/* Ürün Detayları */}
-            <div className="flex flex-col justify-center">
-              <Link
-                href="/"
-                className="text-gray-600 hover:text-gray-800 mb-6 inline-flex items-center"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Geri Dön
-              </Link>
+            {/* Sepete Ekle Butonu */}
+            <button
+              onClick={handleAddToCart}
+              className="mt-6 w-full rounded-full bg-black py-3 text-white transition-colors hover:bg-gray-800"
+            >
+              Sepete Ekle
+            </button>
 
-              <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
-              <p className="text-gray-600 mb-6">{product.color}</p>
-              <div className="text-3xl font-bold mb-8">₺{product.price}</div>
-
-              {/* Beden Seçimi */}
-              <SizeSelector product={product} />
-
-              {/* Ürün Açıklaması */}
-              <div className="mt-12">
-                <h3 className="text-lg font-semibold mb-4">Ürün Detayları</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Premium kalite malzemelerle üretilen {product.name}, maksimum
-                  konfor ve şık tasarımı bir arada sunuyor. Dayanıklı dış tabanı
-                  ve nefes alabilen iç yapısıyla günlük kullanım için ideal bir
-                  seçim.
-                </p>
-              </div>
+            {/* Ürün Açıklaması */}
+            <div className="mt-8 space-y-4 border-t pt-8">
+              <h2 className="text-xl font-semibold">Ürün Açıklaması</h2>
+              <p className="text-gray-600">
+                Bu şık ve rahat ayakkabı, günlük kullanım için idealdir. Yüksek
+                kaliteli malzemeler ve özenli işçilik ile üretilmiştir.
+              </p>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
