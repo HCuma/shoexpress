@@ -1,15 +1,21 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  ignore = "git diff --quiet HEAD^ HEAD ./"
 
 [build.environment]
+  NEXT_USE_NETLIFY_EDGE = "true"
   NODE_VERSION = "18"
-  NPM_VERSION = "9"
+  NPM_FLAGS = "--legacy-peer-deps"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[functions]
+  included_files = ["node_modules/@netlify/plugin-nextjs/**/*"]
+
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200 
+  to = "/.netlify/functions/next_render"
+  status = 200
+  force = true 
