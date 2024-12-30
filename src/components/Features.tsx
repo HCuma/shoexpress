@@ -1,3 +1,5 @@
+"use client";
+
 const features = [
   { title: "Ücretsiz Kargo", desc: "Tüm Türkiye'ye ücretsiz kargo" },
   { title: "Güvenli Ödeme", desc: "256-bit SSL güvenlik sertifikası" },
