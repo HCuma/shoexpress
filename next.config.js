@@ -12,7 +12,7 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false,
   },
 };
 
