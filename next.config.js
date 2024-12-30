@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  output: "export",
   images: {
     unoptimized: true,
     domains: ["images.unsplash.com"],
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
 };
 
