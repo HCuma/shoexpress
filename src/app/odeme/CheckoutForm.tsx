@@ -5,7 +5,7 @@ import { useState, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutForm() {
-  const { items, totalPrice, clearCart } = useCart();
+  const { cartItems, totalPrice, clearCart } = useCart();
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -63,7 +63,7 @@ export default function CheckoutForm() {
     router.push("/");
   };
 
-  if (typeof window !== "undefined" && items.length === 0) {
+  if (typeof window !== "undefined" && cartItems.length === 0) {
     router.push("/");
     return null;
   }
@@ -76,7 +76,7 @@ export default function CheckoutForm() {
           <div className="rounded-lg bg-white p-6 shadow-md">
             <h2 className="mb-6 text-2xl font-semibold">Sipariş Özeti</h2>
             <div className="space-y-4">
-              {items.map((item) => (
+              {cartItems.map((item) => (
                 <div
                   key={`${item.id}-${item.size}`}
                   className="flex items-center gap-4 border-b pb-4"

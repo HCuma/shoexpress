@@ -7,16 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Share2, Star } from "lucide-react";
 import { toast } from "react-hot-toast";
-
-interface Product {
-  id: number;
-  name: string;
-  color: string;
-  price: string;
-  image: string;
-  category: string;
-  stock: { [key: number]: number };
-}
+import { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;

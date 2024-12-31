@@ -197,9 +197,9 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
               <div className="mb-6">
                 <h3 className="font-semibold mb-2">Beden Seç</h3>
                 <SizeSelector
-                  category={product.category}
+                  sizes={product.sizes}
                   selectedSize={selectedSize}
-                  onSelect={setSelectedSize}
+                  onSelectSize={setSelectedSize}
                 />
               </div>
 

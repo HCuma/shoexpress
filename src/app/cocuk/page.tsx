@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import { Product } from "@/types";
 import { products } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { useState, useEffect } from "react";

@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 
 interface SizeSelectorProps {
-  category: string;
+  sizes: number[];
   selectedSize: number | null;
-  onSelect: (size: number) => void;
+  onSelectSize: (size: number) => void;
 }
 
 const sizesMap = {
@@ -15,18 +15,16 @@ const sizesMap = {
 };
 
 export default function SizeSelector({
-  category,
+  sizes,
   selectedSize,
-  onSelect,
+  onSelectSize,
 }: SizeSelectorProps) {
-  const sizes = sizesMap[category as keyof typeof sizesMap] || [];
-
   return (
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
       {sizes.map((size) => (
         <button
           key={size}
-          onClick={() => onSelect(size)}
+          onClick={() => onSelectSize(size)}
           className={`h-12 rounded-xl border-2 transition-all flex items-center justify-center text-sm font-semibold hover:shadow-md
             ${
               selectedSize === size

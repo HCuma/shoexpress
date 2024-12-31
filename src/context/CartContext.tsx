@@ -6,10 +6,14 @@ import { toast } from "react-hot-toast";
 interface CartItem {
   id: number;
   name: string;
+  color: string;
   price: string;
   image: string;
   size: number;
   quantity: number;
+  category: string;
+  description: string;
+  material: string;
 }
 
 interface CartContextType {

@@ -29,6 +29,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
       color: product.color,
       size: selectedSize,
       quantity: quantity,
+      category: product.category,
+      description: product.description,
+      material: product.material,
     });
     setIsCartOpen(true);
   };
