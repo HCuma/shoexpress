@@ -1,35 +1,43 @@
 "use client";
 
-import React from "react";
+import { motion } from "framer-motion";
 
 interface SizeSelectorProps {
-  sizes: number[];
+  category: string;
   selectedSize: number | null;
-  onSelectSize: (size: number) => void;
+  onSelect: (size: number) => void;
 }
 
-const SizeSelector: React.FC<SizeSelectorProps> = ({
-  sizes,
+const sizesMap = {
+  erkek: [40, 41, 42, 43, 44, 45],
+  kadin: [36, 37, 38, 39, 40, 41],
+  cocuk: [28, 29, 30, 31, 32, 33, 34, 35],
+};
+
+export default function SizeSelector({
+  category,
   selectedSize,
-  onSelectSize,
-}) => {
+  onSelect,
+}: SizeSelectorProps) {
+  const sizes = sizesMap[category as keyof typeof sizesMap] || [];
+
   return (
-    <div className="grid grid-cols-6 gap-2">
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
       {sizes.map((size) => (
         <button
           key={size}
-          onClick={() => onSelectSize(size)}
-          className={`h-12 rounded-lg border text-center transition-all ${
-            selectedSize === size
-              ? "border-black bg-black text-white font-medium"
-              : "border-gray-300 hover:border-black text-gray-700 hover:bg-gray-50"
-          }`}
+          onClick={() => onSelect(size)}
+          className={`h-12 rounded-xl border-2 transition-all flex items-center justify-center text-sm font-semibold hover:shadow-md
+            ${
+              selectedSize === size
+                ? "border-black bg-black text-white"
+                : "border-gray-200 hover:border-black"
+            }
+          `}
         >
           {size}
         </button>
       ))}
     </div>
   );
-};
-
-export default SizeSelector;
+}

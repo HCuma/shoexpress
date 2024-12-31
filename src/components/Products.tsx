@@ -2,7 +2,10 @@
 
 import { products } from "@/data/products";
 import ProductCard from "./ProductCard";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 
 export default function Products() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -11,24 +14,28 @@ export default function Products() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
-  const carouselProducts = products.slice(0, 8);
+  const [ref, inView] = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
+  const carouselProducts = useMemo(() => products.slice(0, 8), []);
   const totalProducts = carouselProducts.length;
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setProductsPerPage(1);
-      } else if (window.innerWidth < 1024) {
-        setProductsPerPage(2);
-      } else {
-        setProductsPerPage(4);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+  const handleResize = useCallback(() => {
+    const width = window.innerWidth;
+    setProductsPerPage(width < 640 ? 1 : width < 1024 ? 2 : 4);
   }, []);
+
+  useEffect(() => {
+    handleResize();
+    const debouncedHandleResize = debounce(handleResize, 250);
+    window.addEventListener("resize", debouncedHandleResize);
+    return () => {
+      window.removeEventListener("resize", debouncedHandleResize);
+      debouncedHandleResize.cancel();
+    };
+  }, [handleResize]);
 
   const totalPages = Math.ceil(totalProducts / productsPerPage);
 
@@ -41,26 +48,26 @@ export default function Products() {
     }
   }, [isHovering, totalPages]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + totalPages) % totalPages);
-  };
+  }, [totalPages]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % totalPages);
-  };
+  }, [totalPages]);
 
   const minSwipeDistance = 50;
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
-  };
+  }, []);
 
-  const onTouchMove = (e: React.TouchEvent) => {
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
-  };
+  }, []);
 
-  const onTouchEnd = () => {
+  const onTouchEnd = useCallback(() => {
     if (!touchStart || !touchEnd) return;
 
     const distance = touchStart - touchEnd;
@@ -73,23 +80,46 @@ export default function Products() {
     if (isRightSwipe) {
       handlePrev();
     }
-  };
+  }, [touchStart, touchEnd, handleNext, handlePrev]);
 
-  const visibleProducts = carouselProducts.slice(
-    currentIndex * productsPerPage,
-    (currentIndex + 1) * productsPerPage
+  const visibleProducts = useMemo(
+    () =>
+      carouselProducts.slice(
+        currentIndex * productsPerPage,
+        (currentIndex + 1) * productsPerPage
+      ),
+    [carouselProducts, currentIndex, productsPerPage]
   );
 
   return (
-    <section
-      className="py-8 md:py-12 lg:py-16 bg-gray-50"
+    <motion.section
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.5 }}
+      className="relative py-8 md:py-12 lg:py-16 bg-gradient-to-br from-gray-50 to-white"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="container mx-auto px-4 md:px-6">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "radial-gradient(#e5e7eb 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
+          opacity: 0.3,
+        }}
+      />
+
+      <div className="container relative mx-auto px-4 md:px-6">
+        <motion.h2
+          initial={{ opacity: 0, x: -20 }}
+          animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center"
+        >
           Öne Çıkan Ürünler
-        </h2>
+        </motion.h2>
+
         <div className="relative">
           <div
             ref={carouselRef}
@@ -98,72 +128,55 @@ export default function Products() {
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
-            {visibleProducts.map((product) => (
-              <div
-                key={product.id}
-                className="opacity-0 animate-fadeSlide"
-                style={{
-                  animationDelay: `${visibleProducts.indexOf(product) * 150}ms`,
-                }}
-              >
-                <ProductCard product={product} />
-              </div>
-            ))}
+            <AnimatePresence mode="wait">
+              {visibleProducts.map((product) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: visibleProducts.indexOf(product) * 0.1,
+                  }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
-          {/* Navigation Buttons */}
           <div className="absolute inset-y-0 -left-4 -right-4 md:-left-8 md:-right-8 lg:-left-16 lg:-right-16 flex items-center justify-between pointer-events-none">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handlePrev}
-              className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-black bg-opacity-50 hover:bg-opacity-75 text-white flex items-center justify-center transition-all duration-300 pointer-events-auto transform hover:scale-110 ${
+              className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl text-gray-800 flex items-center justify-center transition-all duration-300 pointer-events-auto ${
                 isHovering ? "opacity-100" : "opacity-0 sm:opacity-0"
               }`}
               aria-label="Previous slide"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <button
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleNext}
-              className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-black bg-opacity-50 hover:bg-opacity-75 text-white flex items-center justify-center transition-all duration-300 pointer-events-auto transform hover:scale-110 ${
+              className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl text-gray-800 flex items-center justify-center transition-all duration-300 pointer-events-auto ${
                 isHovering ? "opacity-100" : "opacity-0 sm:opacity-0"
               }`}
               aria-label="Next slide"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+            </motion.button>
           </div>
 
-          {/* Dots */}
-          <div className="flex justify-center mt-4 md:mt-6 lg:mt-8 gap-1.5 md:gap-2">
+          <div className="flex justify-center mt-6 md:mt-8 gap-1.5 md:gap-2">
             {Array.from({ length: totalPages }).map((_, index) => (
-              <button
+              <motion.button
                 key={index}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.8 }}
                 onClick={() => setCurrentIndex(index)}
                 className={`w-2 md:w-2.5 h-2 md:h-2.5 rounded-full transition-all duration-300 ${
                   currentIndex === index
@@ -176,22 +189,31 @@ export default function Products() {
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes fadeSlide {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeSlide {
-          animation: fadeSlide 0.5s ease-out forwards;
-        }
-      `}</style>
-    </section>
+    </motion.section>
   );
+}
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): T & { cancel: () => void } {
+  let timeout: NodeJS.Timeout | null = null;
+
+  const debounced = (...args: Parameters<T>) => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  };
+
+  return debounced as T & { cancel: () => void };
 }

@@ -2,10 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import CartModal from "./CartModal";
 import SearchModal from "./SearchModal";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Header() {
   const pathname = usePathname();
@@ -13,6 +14,16 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { setIsCartOpen, totalItems } = useCart();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const menuItems = [
     { name: "Erkek", href: "/erkek" },
@@ -21,20 +32,26 @@ export default function Header() {
     { name: "İletişim", href: "/iletisim" },
   ];
 
+  const textColor = scrolled || !isHomePage ? "text-black" : "text-white";
+
   return (
     <>
-      <header
-        className={`fixed w-full z-50 transition-colors ${
-          isHomePage ? "bg-black/10 backdrop-blur-sm" : "bg-white shadow-sm"
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className={`fixed w-full z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-white shadow-lg backdrop-blur-lg"
+            : isHomePage
+            ? "bg-black/10 backdrop-blur-sm"
+            : "bg-white shadow-sm"
         }`}
       >
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
             <Link
               href="/"
-              className={`font-bold text-xl md:text-2xl ${
-                isHomePage ? "text-white" : "text-black"
-              }`}
+              className={`font-bold text-xl md:text-2xl ${textColor}`}
             >
               SHOEXPRESS
             </Link>
@@ -44,9 +61,7 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`text-base xl:text-lg hover:opacity-75 transition-opacity ${
-                    isHomePage ? "text-white" : "text-black"
-                  }`}
+                  className={`text-base xl:text-lg hover:opacity-75 transition-opacity ${textColor}`}
                 >
                   {item.name}
                 </Link>
@@ -56,9 +71,7 @@ export default function Header() {
             <div className="flex items-center space-x-4 md:space-x-6">
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className={`hidden md:block hover:opacity-75 transition-opacity ${
-                  isHomePage ? "text-white" : "text-black"
-                }`}
+                className={`hidden md:block hover:opacity-75 transition-opacity ${textColor}`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -77,9 +90,7 @@ export default function Header() {
               </button>
               <button
                 onClick={() => setIsCartOpen(true)}
-                className={`hidden md:block hover:opacity-75 transition-opacity relative ${
-                  isHomePage ? "text-white" : "text-black"
-                }`}
+                className={`hidden md:block hover:opacity-75 transition-opacity relative ${textColor}`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -104,9 +115,7 @@ export default function Header() {
 
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`lg:hidden hover:opacity-75 transition-opacity ${
-                  isHomePage ? "text-white" : "text-black"
-                }`}
+                className={`lg:hidden hover:opacity-75 transition-opacity ${textColor}`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -136,10 +145,11 @@ export default function Header() {
           </div>
 
           {isMenuOpen && (
-            <div
-              className={`lg:hidden pb-4 md:pb-6 ${
-                isHomePage ? "text-white" : "text-black"
-              }`}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`lg:hidden pb-4 md:pb-6 ${textColor}`}
             >
               <nav className="flex flex-col space-y-3 md:space-y-4">
                 {menuItems.map((item) => (
@@ -203,10 +213,10 @@ export default function Header() {
                   </span>
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
-      </header>
+      </motion.header>
 
       <CartModal />
       <SearchModal

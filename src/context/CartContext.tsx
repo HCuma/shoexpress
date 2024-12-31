@@ -1,23 +1,23 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState } from "react";
+import { toast } from "react-hot-toast";
 
 interface CartItem {
   id: number;
   name: string;
   price: string;
   image: string;
-  color: string;
   size: number;
   quantity: number;
 }
 
 interface CartContextType {
-  items: CartItem[];
-  addToCart: (product: CartItem) => void;
-  removeFromCart: (productId: number, size?: number) => void;
-  updateQuantity: (productId: number, quantity: number, size?: number) => void;
+  cartItems: CartItem[];
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (id: number, size: number) => void;
   clearCart: () => void;
+  updateQuantity: (id: number, size: number, quantity: number) => void;
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
   totalItems: number;
@@ -26,61 +26,58 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product: CartItem) => {
-    setItems((prevItems) => {
-      const existingItem = prevItems.find(
-        (item) => item.id === product.id && item.size === product.size
+  const addToCart = (item: CartItem) => {
+    setCartItems((prev) => {
+      const existingItem = prev.find(
+        (i) => i.id === item.id && i.size === item.size
       );
 
       if (existingItem) {
-        return prevItems.map((item) =>
-          item.id === product.id && item.size === product.size
-            ? { ...item, quantity: item.quantity + product.quantity }
-            : item
+        return prev.map((i) =>
+          i.id === item.id && i.size === item.size
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
         );
       }
 
-      return [...prevItems, product];
+      return [...prev, { ...item, quantity: 1 }];
     });
-    setIsCartOpen(true);
+
+    toast.success("Ürün sepete eklendi!");
   };
 
-  const removeFromCart = (productId: number, size?: number) => {
-    setItems((prevItems) =>
-      prevItems.filter(
-        (item) =>
-          !(item.id === productId && (size === undefined || item.size === size))
-      )
+  const removeFromCart = (id: number, size: number) => {
+    setCartItems((prev) =>
+      prev.filter((i) => !(i.id === id && i.size === size))
     );
+    toast.success("Ürün sepetten kaldırıldı");
   };
 
-  const updateQuantity = (
-    productId: number,
-    quantity: number,
-    size?: number
-  ) => {
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId && (size === undefined || item.size === size)
-          ? { ...item, quantity }
+  const clearCart = () => {
+    setCartItems([]);
+    toast.success("Sepet boşaltıldı");
+  };
+
+  const updateQuantity = (id: number, size: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.id === id && item.size === size
+          ? { ...item, quantity: newQuantity }
           : item
       )
     );
   };
 
-  const clearCart = () => {
-    setItems([]);
-  };
-
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-
-  const totalPrice = items.reduce((sum, item) => {
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = cartItems.reduce((sum, item) => {
     const price = parseFloat(
-      item.price.replace(/[^0-9,]/g, "").replace(",", ".")
+      item.price.replace(/[^\d,]/g, "").replace(",", ".")
     );
     return sum + price * item.quantity;
   }, 0);
@@ -88,11 +85,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartContext.Provider
       value={{
-        items,
+        cartItems,
         addToCart,
         removeFromCart,
-        updateQuantity,
         clearCart,
+        updateQuantity,
         isCartOpen,
         setIsCartOpen,
         totalItems,
