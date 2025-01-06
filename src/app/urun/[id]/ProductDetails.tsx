@@ -71,6 +71,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
     return quantity >= maxStock;
   }, [selectedSize, quantity, product.sizeStock]);
 
+  const hasStock = React.useMemo(() => {
+    if (!selectedSize) return false;
+    return (product.sizeStock[selectedSize] || 0) > 0;
+  }, [selectedSize, product.sizeStock]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -163,15 +168,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
           <div className="flex gap-4">
             <button
               onClick={handleAddToCart}
-              disabled={!product.inStock}
-              className={`flex-1 py-4 px-6 rounded-full flex items-center justify-center gap-2 transition-colors ${
-                product.inStock
-                  ? "bg-black text-white hover:bg-black/90"
-                  : "bg-gray-300 cursor-not-allowed text-gray-500"
+              disabled={!selectedSize || !hasStock}
+              className={`w-full py-4 rounded-full font-semibold transition-all ${
+                !selectedSize || !hasStock
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-black text-white hover:bg-gray-800"
               }`}
             >
-              <ShoppingBag className="w-5 h-5" />
-              <span>{product.inStock ? "Sepete Ekle" : "Stokta Yok"}</span>
+              {!selectedSize
+                ? "Beden Seçiniz"
+                : !hasStock
+                ? "Stokta Yok"
+                : "Sepete Ekle"}
             </button>
             <button className="w-14 h-14 rounded-full border border-gray-300 flex items-center justify-center hover:border-black text-gray-600">
               <Heart className="w-5 h-5" />
@@ -220,10 +228,10 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
                   <span className="font-medium">Stok Durumu:</span>
                   <span
                     className={`${
-                      product.inStock ? "text-green-600" : "text-red-600"
+                      hasStock ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    {product.inStock ? "Stokta var" : "Stokta yok"}
+                    {hasStock ? "Stokta var" : "Stokta yok"}
                   </span>
                 </li>
               </ul>
