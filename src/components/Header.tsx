@@ -26,9 +26,9 @@ export default function Header() {
   }, []);
 
   const menuItems = [
-    { name: "Erkek", href: "/erkek" },
-    { name: "Kadın", href: "/kadin" },
-    { name: "Çocuk", href: "/cocuk" },
+    { name: "Erkek", href: "/kategori/erkek" },
+    { name: "Kadın", href: "/kategori/kadin" },
+    { name: "Çocuk", href: "/kategori/cocuk" },
     { name: "İletişim", href: "/iletisim" },
   ];
 

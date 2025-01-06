@@ -1,14 +1,25 @@
 "use client";
 
-import Header from "@/components/Header";
-import { Product } from "@/types";
 import { products } from "@/data/products";
+import { useEffect, useState } from "react";
+import Header from "@/components/Header";
 import ProductCard from "@/components/ProductCard";
-import { useState, useEffect } from "react";
 
-export default function KidsPage() {
-  const kidsProducts = products.filter(
-    (product) => product.category === "cocuk"
+type CategoryParams = {
+  params: {
+    category: "erkek" | "kadin" | "cocuk";
+  };
+};
+
+const categoryTitles = {
+  erkek: "Erkek Ayakkabıları",
+  kadin: "Kadın Ayakkabıları",
+  cocuk: "Çocuk Ayakkabıları",
+};
+
+export default function CategoryPage({ params }: CategoryParams) {
+  const categoryProducts = products.filter(
+    (product) => product.category === params.category
   );
   const [maxPrice, setMaxPrice] = useState(5000);
   const [currentPrice, setCurrentPrice] = useState(5000);
@@ -17,7 +28,7 @@ export default function KidsPage() {
   );
 
   useEffect(() => {
-    const prices = kidsProducts.map((product) =>
+    const prices = categoryProducts.map((product) =>
       parseFloat(product.price.replace(".", ""))
     );
     const max = Math.max(...prices);
@@ -25,7 +36,7 @@ export default function KidsPage() {
     setCurrentPrice(max);
   }, []);
 
-  const filteredProducts = kidsProducts
+  const filteredProducts = categoryProducts
     .filter((product) => {
       const price = parseFloat(product.price.replace(".", ""));
       return price >= 0 && price <= currentPrice;
@@ -50,10 +61,12 @@ export default function KidsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="container mx-auto px-6 py-24">
-        <h1 className="text-4xl font-bold mb-8">Çocuk Ayakkabıları</h1>
+        <h1 className="text-4xl font-bold mb-8">
+          {categoryTitles[params.category]}
+        </h1>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Filters */}
+          {/* Filtreler */}
           <div className="w-full md:w-64 space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h2 className="text-lg font-semibold mb-4">Fiyat Aralığı</h2>
@@ -64,11 +77,11 @@ export default function KidsPage() {
                   max={maxPrice}
                   value={currentPrice}
                   onChange={(e) => setCurrentPrice(parseInt(e.target.value))}
-                  className="w-full"
+                  className="w-full accent-black cursor-pointer"
                 />
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>0 TL</span>
-                  <span>{currentPrice} TL</span>
+                  <span>{currentPrice.toLocaleString()} TL</span>
                 </div>
               </div>
             </div>
@@ -107,7 +120,7 @@ export default function KidsPage() {
             </div>
           </div>
 
-          {/* Products Grid */}
+          {/* Ürün Listesi */}
           <div className="flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredProducts.map((product) => (
@@ -115,9 +128,9 @@ export default function KidsPage() {
               ))}
             </div>
             {filteredProducts.length === 0 && (
-              <p className="text-center text-gray-500 mt-8">
-                Bu kriterlere uygun ürün bulunamadı.
-              </p>
+              <div className="text-center py-12">
+                <p className="text-gray-500">Bu kategoride ürün bulunamadı.</p>
+              </div>
             )}
           </div>
         </div>

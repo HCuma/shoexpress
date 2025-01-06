@@ -13,20 +13,12 @@ interface ProductCardProps {
   product: Product;
 }
 
-const sizesMap = {
-  erkek: [40, 41, 42, 43, 44, 45],
-  kadin: [36, 37, 38, 39, 40, 41],
-  cocuk: [28, 29, 30, 31, 32, 33, 34, 35],
-};
-
 export default function ProductCard({ product }: ProductCardProps) {
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
   const [showSizes, setShowSizes] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const { addToCart } = useCart();
-
-  const sizes = sizesMap[product.category as keyof typeof sizesMap] || [];
+  const { addToCart, getProductStock } = useCart();
 
   const handleAddToCart = useCallback(
     (e: React.MouseEvent) => {
@@ -34,6 +26,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       e.stopPropagation();
 
       if (selectedSize) {
+        const stock = getProductStock(product.id, selectedSize);
+        if (stock <= 0) {
+          toast.error("Bu beden için stok bulunmamaktadır.");
+          return;
+        }
+
         addToCart({
           ...product,
           size: selectedSize,
@@ -45,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         setShowSizes(true);
       }
     },
-    [addToCart, product, selectedSize]
+    [addToCart, product, selectedSize, getProductStock]
   );
 
   const handleSizeSelect = useCallback((e: React.MouseEvent, size: number) => {
@@ -76,6 +74,14 @@ export default function ProductCard({ product }: ProductCardProps) {
       toast.success("Ürün linki kopyalandı!");
     },
     [product.id]
+  );
+
+  const isStockAvailable = useCallback(
+    (size: number) => {
+      const stock = getProductStock(product.id, size);
+      return stock > 0;
+    },
+    [product.id, getProductStock]
   );
 
   return (
@@ -158,23 +164,41 @@ export default function ProductCard({ product }: ProductCardProps) {
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {sizes.map((size) => (
-                    <motion.button
-                      key={size}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={(e: React.MouseEvent) =>
-                        handleSizeSelect(e, size)
-                      }
-                      className={`w-10 h-10 rounded-lg border-2 ${
-                        selectedSize === size
-                          ? "border-black bg-black text-white"
-                          : "border-gray-300 hover:border-black"
-                      } transition-all flex items-center justify-center text-sm font-semibold hover:shadow-md`}
-                    >
-                      {size}
-                    </motion.button>
-                  ))}
+                  {product.sizes.map((size) => {
+                    const stock = getProductStock(product.id, size);
+                    const hasStock = isStockAvailable(size);
+
+                    return (
+                      <motion.button
+                        key={size}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e: React.MouseEvent) =>
+                          hasStock && handleSizeSelect(e, size)
+                        }
+                        disabled={!hasStock}
+                        className={`w-10 h-10 rounded-lg border-2 relative ${
+                          selectedSize === size
+                            ? "border-black bg-black text-white"
+                            : !hasStock
+                            ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 hover:border-black"
+                        } transition-all flex items-center justify-center text-sm font-semibold hover:shadow-md`}
+                      >
+                        <span>{size}</span>
+                        {stock <= 5 && stock > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded-full">
+                            {stock}
+                          </span>
+                        )}
+                        {!hasStock && (
+                          <span className="absolute -top-2 -right-2 bg-gray-500 text-white text-xs px-1 rounded-full">
+                            Tükendi
+                          </span>
+                        )}
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -184,17 +208,25 @@ export default function ProductCard({ product }: ProductCardProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleAddToCart}
+            disabled={Boolean(
+              showSizes &&
+                (!selectedSize ||
+                  (selectedSize && !isStockAvailable(selectedSize)))
+            )}
             className={`w-full mt-4 py-3 px-4 rounded-full font-semibold transition-all ${
               showSizes && !selectedSize
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : selectedSize && !isStockAvailable(selectedSize)
+                ? "bg-red-100 text-red-600 cursor-not-allowed"
                 : "bg-black text-white hover:bg-gray-800 hover:shadow-lg"
             }`}
-            disabled={showSizes && !selectedSize}
           >
             {showSizes
-              ? selectedSize
-                ? "Sepete Ekle"
-                : "Beden Seçiniz"
+              ? !selectedSize
+                ? "Beden Seçiniz"
+                : !isStockAvailable(selectedSize)
+                ? "Stokta Yok"
+                : "Sepete Ekle"
               : "Sepete Ekle"}
           </motion.button>
         </div>

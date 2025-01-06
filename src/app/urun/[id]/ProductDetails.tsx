@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Product } from "@/types/product";
+import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import SizeSelector from "./SizeSelector";
 import { Heart, Share2, ShoppingBag, Truck } from "lucide-react";
@@ -21,6 +21,16 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
       alert("Lütfen bir beden seçiniz");
       return;
     }
+
+    // Stok kontrolü
+    const availableStock = product.sizeStock[selectedSize] || 0;
+    if (availableStock < quantity) {
+      alert(
+        `Üzgünüz, bu beden için sadece ${availableStock} adet stok bulunmaktadır.`
+      );
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -37,11 +47,29 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
   };
 
   const handleQuantityChange = (change: number) => {
+    if (!selectedSize) return;
+
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= 10) {
+    const availableStock = product.sizeStock[selectedSize] || 0;
+
+    if (newQuantity >= 1 && newQuantity <= availableStock) {
       setQuantity(newQuantity);
     }
   };
+
+  // Seçili beden için stok kontrolü
+  const getStockStatus = (size: number) => {
+    const stock = product.sizeStock[size] || 0;
+    if (stock === 0) return "Stokta yok";
+    if (stock <= 5) return `Son ${stock} ürün`;
+    return `Stokta ${stock} adet`;
+  };
+
+  const isMaxQuantity = React.useMemo(() => {
+    if (!selectedSize) return true;
+    const maxStock = product.sizeStock[selectedSize] || 0;
+    return quantity >= maxStock;
+  }, [selectedSize, quantity, product.sizeStock]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -77,11 +105,25 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
 
           {/* Beden Seçimi */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-700">Beden Seç</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-700">Beden Seç</h3>
+              {selectedSize && (
+                <span className="text-sm text-gray-600">
+                  {getStockStatus(selectedSize)}
+                </span>
+              )}
+            </div>
             <SizeSelector
               sizes={product.sizes}
               selectedSize={selectedSize}
-              onSelectSize={setSelectedSize}
+              onSelectSize={(size) => {
+                setSelectedSize(size);
+                const availableStock = product.sizeStock[size] || 0;
+                if (quantity > availableStock) {
+                  setQuantity(availableStock);
+                }
+              }}
+              stockInfo={product.sizeStock}
             />
           </div>
 
@@ -91,9 +133,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
+                disabled={quantity <= 1 || !selectedSize}
                 className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors ${
-                  quantity <= 1
+                  quantity <= 1 || !selectedSize
                     ? "border-gray-200 text-gray-300 cursor-not-allowed"
                     : "border-gray-300 hover:border-black text-gray-600"
                 }`}
@@ -105,9 +147,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product }) => {
               </span>
               <button
                 onClick={() => handleQuantityChange(1)}
-                disabled={quantity >= 10}
+                disabled={!selectedSize || isMaxQuantity}
                 className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors ${
-                  quantity >= 10
+                  !selectedSize || isMaxQuantity
                     ? "border-gray-200 text-gray-300 cursor-not-allowed"
                     : "border-gray-300 hover:border-black text-gray-600"
                 }`}
